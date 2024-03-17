@@ -13,6 +13,7 @@ import (
 	"github.com/andrei1998Front/url-shortener/internal/storage/sqlite"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gofiber/fiber/v2/middleware/redirect"
 )
 
 const (
@@ -77,6 +78,7 @@ func main() {
 	router.Use(middleware.URLFormat)
 
 	router.Post("/url", save.New(log, storage))
+	router.Get("/{alias}", redirect.New(log, storage))
 
 	log.Info("starting server", slog.String("address", cfg.Address))
 
