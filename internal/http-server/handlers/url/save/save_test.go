@@ -9,12 +9,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-
 	"github.com/andrei1998Front/url-shortener/internal/http-server/handlers/url/save"
 	"github.com/andrei1998Front/url-shortener/internal/http-server/handlers/url/save/mocks"
 	"github.com/andrei1998Front/url-shortener/internal/lib/logger/handlers/slogdiscard"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSaveHandler(t *testing.T) {
@@ -66,7 +65,7 @@ func TestSaveHandler(t *testing.T) {
 
 			if tc.respError == "" || tc.mockError != nil {
 				urlSaverMock.On("SaveURL", tc.url, mock.AnythingOfType("string")).
-					Return(int64(1), tc.mockError).
+					Return(tc.mockError).
 					Once()
 			}
 
@@ -90,7 +89,6 @@ func TestSaveHandler(t *testing.T) {
 
 			require.Equal(t, tc.respError, resp.Error)
 
-			// TODO: add more checks
 		})
 	}
 }

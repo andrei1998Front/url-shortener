@@ -2,6 +2,7 @@ package save
 
 import (
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
 
@@ -15,7 +16,7 @@ import (
 )
 
 type Request struct {
-	URL   string `json:"url" validate:"required, url`
+	URL   string `json:"url" validate:"required,url"`
 	Alias string `json:"alias,omitempty"`
 }
 
@@ -43,7 +44,15 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 
 		var req Request
 
-		if err := render.DecodeJSON(r.Body, &req); err != nil {
+		err := render.DecodeJSON(r.Body, &req)
+		if errors.Is(err, io.EOF) {
+			log.Error("request body is empty")
+
+			render.JSON(w, r, response.Error("empty request"))
+
+			return
+		}
+		if err != nil {
 			log.Error("failed to decode request body", sl.Err(err))
 
 			render.JSON(w, r, response.Error("failed to decode request"))
@@ -79,7 +88,7 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 			alias = rndAlias
 		}
 
-		err := urlSaver.SaveURL(req.URL, alias)
+		err = urlSaver.SaveURL(req.URL, alias)
 
 		if errors.Is(err, storage.ErrUrlExists) {
 			log.Info("url already exists", slog.String("url", req.URL))
@@ -95,6 +104,8 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 
 			return
 		}
+
+		log.Info("url added")
 
 		render.JSON(w, r, Response{
 			Response: response.OK(),
