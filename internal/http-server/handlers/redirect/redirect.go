@@ -8,7 +8,7 @@ import (
 	"github.com/andrei1998Front/url-shortener/internal/lib/api/response"
 	sl "github.com/andrei1998Front/url-shortener/internal/lib/logger/slog"
 	"github.com/andrei1998Front/url-shortener/internal/storage"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 )

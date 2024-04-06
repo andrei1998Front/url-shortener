@@ -1,28 +1,52 @@
 package redirect
 
 import (
-	"log/slog"
-	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"github.com/andrei1998Front/url-shortener/internal/http-server/handlers/redirect/mocks"
+	"github.com/andrei1998Front/url-shortener/internal/lib/api"
+	"github.com/andrei1998Front/url-shortener/internal/lib/logger/handlers/slogdiscard"
+	"github.com/go-chi/chi/v5"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestNew(t *testing.T) {
-	type args struct {
-		log       *slog.Logger
-		urlGetter URLGetter
-	}
-	tests := []struct {
-		name string
-		args args
-		want http.HandlerFunc
+func TestRedirectHandler(t *testing.T) {
+	cases := []struct {
+		name      string
+		alias     string
+		url       string
+		respError string
+		mockError error
 	}{
-		// TODO: Add test cases.
+		{
+			name:  "Success",
+			alias: "test_alias",
+			url:   "https://www.google.com/",
+		},
 	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			urlGetterMock := mocks.NewURLGetter(t)
+
+			if tc.respError == "" || tc.mockError != nil {
+				urlGetterMock.On("GetURL", tc.alias).
+					Return(tc.url, tc.mockError).Once()
+			}
+
+			r := chi.NewRouter()
+			r.Get("/{alias}", New(slogdiscard.NewDiscardLogger(), urlGetterMock))
+
+			ts := httptest.NewServer(r)
+			defer ts.Close()
+
+			redirectedToURL, err := api.GetRedirect(ts.URL + "/" + tc.alias)
+			require.NoError(t, err)
+
+			// Check the final URL after redirection.
+			assert.Equal(t, tc.url, redirectedToURL)
 		})
 	}
 }
